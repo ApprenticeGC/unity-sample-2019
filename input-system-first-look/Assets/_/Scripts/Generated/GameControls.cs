@@ -35,6 +35,14 @@ namespace GiantCroissant.InputSystemFirstLook
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""Open Hud"",
+                    ""type"": ""Button"",
+                    ""id"": ""b9855b12-eafd-404d-a57a-a33e58c3ec44"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -180,6 +188,66 @@ namespace GiantCroissant.InputSystemFirstLook
                     ""action"": ""Fire"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d7067f63-3942-4242-8fe1-a54f3c91f719"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Open Hud"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f053bf01-ad27-4397-b6ed-2ca9789bba9f"",
+                    ""path"": ""<Keyboard>/x"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Open Hud"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""Hud"",
+            ""id"": ""7b25503a-a8b1-459d-a9a8-32781f0bc9a7"",
+            ""actions"": [
+                {
+                    ""name"": ""Resume"",
+                    ""type"": ""Button"",
+                    ""id"": ""baae79c6-08cd-4196-b261-9c06ea56ec19"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """"
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""895aabab-cfcf-4ced-aa98-4fa0ffd7ee5d"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Resume"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ae45d287-0178-447f-ae0e-e7788819ae2c"",
+                    ""path"": ""<Keyboard>/x"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Resume"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -190,6 +258,10 @@ namespace GiantCroissant.InputSystemFirstLook
             m_Battle = asset.FindActionMap("Battle", throwIfNotFound: true);
             m_Battle_Move = m_Battle.FindAction("Move", throwIfNotFound: true);
             m_Battle_Fire = m_Battle.FindAction("Fire", throwIfNotFound: true);
+            m_Battle_OpenHud = m_Battle.FindAction("Open Hud", throwIfNotFound: true);
+            // Hud
+            m_Hud = asset.FindActionMap("Hud", throwIfNotFound: true);
+            m_Hud_Resume = m_Hud.FindAction("Resume", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -241,12 +313,14 @@ namespace GiantCroissant.InputSystemFirstLook
         private IBattleActions m_BattleActionsCallbackInterface;
         private readonly InputAction m_Battle_Move;
         private readonly InputAction m_Battle_Fire;
+        private readonly InputAction m_Battle_OpenHud;
         public struct BattleActions
         {
             private GameControls m_Wrapper;
             public BattleActions(GameControls wrapper) { m_Wrapper = wrapper; }
             public InputAction @Move => m_Wrapper.m_Battle_Move;
             public InputAction @Fire => m_Wrapper.m_Battle_Fire;
+            public InputAction @OpenHud => m_Wrapper.m_Battle_OpenHud;
             public InputActionMap Get() { return m_Wrapper.m_Battle; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -262,6 +336,9 @@ namespace GiantCroissant.InputSystemFirstLook
                     Fire.started -= m_Wrapper.m_BattleActionsCallbackInterface.OnFire;
                     Fire.performed -= m_Wrapper.m_BattleActionsCallbackInterface.OnFire;
                     Fire.canceled -= m_Wrapper.m_BattleActionsCallbackInterface.OnFire;
+                    OpenHud.started -= m_Wrapper.m_BattleActionsCallbackInterface.OnOpenHud;
+                    OpenHud.performed -= m_Wrapper.m_BattleActionsCallbackInterface.OnOpenHud;
+                    OpenHud.canceled -= m_Wrapper.m_BattleActionsCallbackInterface.OnOpenHud;
                 }
                 m_Wrapper.m_BattleActionsCallbackInterface = instance;
                 if (instance != null)
@@ -272,14 +349,55 @@ namespace GiantCroissant.InputSystemFirstLook
                     Fire.started += instance.OnFire;
                     Fire.performed += instance.OnFire;
                     Fire.canceled += instance.OnFire;
+                    OpenHud.started += instance.OnOpenHud;
+                    OpenHud.performed += instance.OnOpenHud;
+                    OpenHud.canceled += instance.OnOpenHud;
                 }
             }
         }
         public BattleActions @Battle => new BattleActions(this);
+
+        // Hud
+        private readonly InputActionMap m_Hud;
+        private IHudActions m_HudActionsCallbackInterface;
+        private readonly InputAction m_Hud_Resume;
+        public struct HudActions
+        {
+            private GameControls m_Wrapper;
+            public HudActions(GameControls wrapper) { m_Wrapper = wrapper; }
+            public InputAction @Resume => m_Wrapper.m_Hud_Resume;
+            public InputActionMap Get() { return m_Wrapper.m_Hud; }
+            public void Enable() { Get().Enable(); }
+            public void Disable() { Get().Disable(); }
+            public bool enabled => Get().enabled;
+            public static implicit operator InputActionMap(HudActions set) { return set.Get(); }
+            public void SetCallbacks(IHudActions instance)
+            {
+                if (m_Wrapper.m_HudActionsCallbackInterface != null)
+                {
+                    Resume.started -= m_Wrapper.m_HudActionsCallbackInterface.OnResume;
+                    Resume.performed -= m_Wrapper.m_HudActionsCallbackInterface.OnResume;
+                    Resume.canceled -= m_Wrapper.m_HudActionsCallbackInterface.OnResume;
+                }
+                m_Wrapper.m_HudActionsCallbackInterface = instance;
+                if (instance != null)
+                {
+                    Resume.started += instance.OnResume;
+                    Resume.performed += instance.OnResume;
+                    Resume.canceled += instance.OnResume;
+                }
+            }
+        }
+        public HudActions @Hud => new HudActions(this);
         public interface IBattleActions
         {
             void OnMove(InputAction.CallbackContext context);
             void OnFire(InputAction.CallbackContext context);
+            void OnOpenHud(InputAction.CallbackContext context);
+        }
+        public interface IHudActions
+        {
+            void OnResume(InputAction.CallbackContext context);
         }
     }
 }

@@ -11,10 +11,14 @@
 
         public Transform leftPoint;
         public Transform rightPoint;
+
+        public GameObject pauseHud;
         
         private GameControls _gameControls;
 
-        private bool fromLeftPoint;
+        private bool _fromLeftPoint;
+
+        private bool _pausing;
 
         void Awake()
         {
@@ -25,21 +29,33 @@
         {
             _gameControls.Battle.Fire.performed += context =>
             {
-                var createdInstance = GameObject.Instantiate(laserPrefab);
-                if (fromLeftPoint)
+                if (!_pausing)
                 {
-                    createdInstance.transform.SetParent(leftPoint);
-                    createdInstance.transform.localPosition = Vector3.zero;
-                    createdInstance.transform.SetParent(null);
-                }
-                else
-                {
-                    createdInstance.transform.SetParent(rightPoint);
-                    createdInstance.transform.localPosition = Vector3.zero;
-                    createdInstance.transform.SetParent(null);
-                }
+                    var createdInstance = GameObject.Instantiate(laserPrefab);
+                    if (_fromLeftPoint)
+                    {
+                        createdInstance.transform.SetParent(leftPoint);
+                        createdInstance.transform.localPosition = Vector3.zero;
+                        createdInstance.transform.SetParent(null);
+                    }
+                    else
+                    {
+                        createdInstance.transform.SetParent(rightPoint);
+                        createdInstance.transform.localPosition = Vector3.zero;
+                        createdInstance.transform.SetParent(null);
+                    }
 
-                fromLeftPoint = !fromLeftPoint;
+                    _fromLeftPoint = !_fromLeftPoint;
+                }
+            };
+
+            _gameControls.Battle.OpenHud.performed += context =>
+            {
+                if (!_pausing)
+                {
+                    _pausing = true;
+                    pauseHud.SetActive(true);
+                }
             };
         }
 
@@ -55,8 +71,11 @@
 
         void Update()
         {
-            var moveValue = _gameControls.Battle.Move.ReadValue<Vector2>();
-            Move((moveValue));
+            if (!_pausing)
+            {
+                var moveValue = _gameControls.Battle.Move.ReadValue<Vector2>();
+                Move((moveValue));
+            }
         }
 
         void Move(Vector2 direction)
@@ -68,6 +87,11 @@
 
             var adjustedDirection = direction * moveSpeed * Time.deltaTime;
             transform.position += new Vector3(adjustedDirection.x, adjustedDirection.y, 0);
+        }
+
+        public void ResumeFromPausing()
+        {
+            _pausing = false;
         }
     }
 }
