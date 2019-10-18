@@ -1,5 +1,3 @@
-/*
+# Project Structure
 
-!.editorconfig
-!.gitignore
-!README.md
+- input-system-first-look
