@@ -7,6 +7,7 @@
     public class PauseHud : MonoBehaviour
     {
         public PlayerControl playerControl;
+        public PlayerControlReactive playerControlReactive;
 
         private GameControls _gameControls;
 
@@ -36,6 +37,7 @@
         public void HandleResumeButton()
         {
             playerControl?.ResumeFromPausing();
+            playerControlReactive?.ResumeFromPausing();
             gameObject.SetActive(false);
         }
     }
